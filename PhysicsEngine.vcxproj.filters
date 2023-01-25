@@ -474,6 +474,7 @@
     <None Include="src\RigidBody\ForceGenerators\ForceGeneratorsRB.tpp" />
     <None Include="src\Collisions\CollideCoarse.tpp" />
     <None Include="src\Collisions\Contacts.tpp" />
+    <None Include="dependencies\irrlicht-1.8.5\bin\Win64-VisualStudio\Irrlicht.dll" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dependencies\irrlicht-1.8.5\include\aabbox3d.h">

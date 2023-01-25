@@ -107,6 +107,9 @@
       <AdditionalLibraryDirectories>$(SolutionDir)dependencies\irrlicht-1.8.5\bin\Win64-VisualStudio;$(SolutionDir)dependencies\irrlicht-1.8.5\lib\Win64-visualStudio</AdditionalLibraryDirectories>
       <AdditionalDependencies>Irrlicht.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy "$(SolutionDir)dependencies\irrlicht-1.8.5\bin\Win64-VisualStudio\Irrlicht.dll" "$(OutDir)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -117,6 +120,9 @@
       <AdditionalLibraryDirectories>$(SolutionDir)dependencies\irrlicht-1.8.5\bin\Win64-VisualStudio;$(SolutionDir)dependencies\irrlicht-1.8.5\lib\Win64-visualStudio</AdditionalLibraryDirectories>
       <AdditionalDependencies>Irrlicht.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy "$(SolutionDir)dependencies\irrlicht-1.8.5\bin\Win64-VisualStudio\Irrlicht.dll" "$(OutDir)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="dependencies\glm\glm\detail\glm.cpp" />
@@ -270,6 +276,7 @@
     <None Include="dependencies\glm\glm\gtx\vector_angle.inl" />
     <None Include="dependencies\glm\glm\gtx\vector_query.inl" />
     <None Include="dependencies\glm\glm\gtx\wrap.inl" />
+    <None Include="dependencies\irrlicht-1.8.5\bin\Win64-VisualStudio\Irrlicht.dll" />
     <None Include="src\Collisions\CollideCoarse.tpp" />
     <None Include="src\Collisions\Contacts.tpp" />
     <None Include="src\MassAggregate\Constraints\HardConstraints.tpp" />
