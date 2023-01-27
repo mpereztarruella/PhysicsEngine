@@ -1,3 +1,5 @@
+#include <Utility/Timer.hpp>
+
 namespace Ocacho::Physics::MassAggregate
 {
 	template <typename ForceList, typename ContactGenList>
@@ -37,9 +39,41 @@ namespace Ocacho::Physics::MassAggregate
 	void
 	ParticleManager<ForceList, ContactGenList>::integrateParticles(const float p_deltaTime) noexcept
 	{
-		for(auto& p : particles_)
+		std::vector<std::thread> myThreads;
+		myThreads.reserve(numberThreads_);
+
+		const size_t length{ uint32_t(std::trunc(particles_.size() / numberThreads_))};
+		size_t start{ 0 }, end{ length };
+
+		for (uint32_t i = 0; i < numberThreads_; ++i)
 		{
-			if(p)
+			if (i == numberThreads_ - 1)
+				end = particles_.size();
+
+			myThreads.emplace_back(std::thread(&ParticleManager<ForceList, ContactGenList>::integrateParticlesMultithreaded, std::reference_wrapper(*this), p_deltaTime, start, end));
+
+			start = end;
+			end = length * (i + 2);
+		}
+
+		for (uint32_t i = 0; i < numberThreads_; ++i)
+		{
+			myThreads[i].join();
+		}
+	}
+
+	//-------------------------------------------------------------------------
+	//-------------------------------------------------------------------------
+
+	template <typename ForceList, typename ContactGenList>
+	void
+	ParticleManager<ForceList, ContactGenList>::integrateParticlesMultithreaded(const float p_deltaTime, const size_t p_start, const size_t p_end) noexcept
+	{
+		for (size_t i = p_start; i < p_end; ++i)
+		{
+			auto& p = particles_[i];
+
+			if (p)
 				Ocacho::Physics::MassAggregate::IntegrateParticle(*p, p_deltaTime);
 		}
 	}
@@ -69,6 +103,12 @@ namespace Ocacho::Physics::MassAggregate
 	void
 	ParticleManager<ForceList, ContactGenList>::runPhysics(const float p_deltaTime) noexcept
 	{
+		Ocacho::Timer timer;
+		
+		static uint8_t times;
+
+		timer.start();
+
 		//First we apply the forces to the particles
 		forceReg_.updateForces(p_deltaTime);
 
@@ -81,6 +121,14 @@ namespace Ocacho::Physics::MassAggregate
 		//Finally we resolve all the contacts that we've generated
 		contactRes_.setIterations(usedContacts * 2);
 		contactRes_.resolveContacts(contactList_, p_deltaTime);
+
+		if (times >= 20)
+		{
+			printf("Ellapsed time: %fms \n", float(timer.ellapsedTime())/1000000);
+			times = 0;
+		}
+
+		++times;
 	}
 
 	//=========================================================================
@@ -91,6 +139,7 @@ namespace Ocacho::Physics::MassAggregate
 	void
 	ParticleManager<ForceList, ContactGenList>::addParticle(Particle& p_particle) noexcept
 	{
+		std::lock_guard<std::mutex> guard(particlesMutex_);
 		particles_.push_back(&p_particle);
 	}
 
@@ -101,6 +150,7 @@ namespace Ocacho::Physics::MassAggregate
 	void
 	ParticleManager<ForceList, ContactGenList>::addContactGenerator(auto p_contactGen) noexcept
 	{
+		std::lock_guard<std::mutex> guard(contactGenMutex_);
 		contactGenVector_.push_back(p_contactGen);
 	}
 
@@ -111,6 +161,7 @@ namespace Ocacho::Physics::MassAggregate
 	void
 	ParticleManager<ForceList, ContactGenList>::addForceRegistration(Particle& p_particle, auto& p_forceGen) noexcept
 	{
+		std::lock_guard<std::mutex> guard(forceRegMutex_);
 		forceReg_.add(p_particle, p_forceGen);
 	}
 };//namespace Ocacho::Physics::MassAggregate

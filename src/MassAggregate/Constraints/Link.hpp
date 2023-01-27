@@ -26,7 +26,7 @@ namespace Ocacho::Physics::MassAggregate
 		
 		public:
 			//Holds the particles which will be linked by a constraint.
-			Particle* particles_[2];
+			Particle* particles_[2] {};
 
 		private:
 			//=========================================================================

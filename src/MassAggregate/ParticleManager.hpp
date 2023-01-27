@@ -12,8 +12,9 @@
  */
 #pragma once
 
-#include "Utility/TypeAliases.hpp"
+#include <thread>
 
+#include "Utility/TypeAliases.hpp"
 #include "Physics.hpp"
 #include "MassAggregate/ForceGenerators/ForceGeneratorBase.hpp"
 #include "MassAggregate/Contacts/ContactResolver.hpp"
@@ -51,9 +52,11 @@ namespace Ocacho::Physics::MassAggregate
 
 			//Holds the reference to the particles
 			std::vector<Particle*> particles_;
+			std::mutex particlesMutex_{};
 
 			//Holds the force registry for the engine
 			forceRegType forceReg_;
+			std::mutex forceRegMutex_{};
 
 			//Holds the contact resolver
 			ContactResolver contactRes_;
@@ -63,6 +66,9 @@ namespace Ocacho::Physics::MassAggregate
 
 			//Holds the contact generators for the manager
 			std::vector<contactGenVariantType> contactGenVector_;
+			std::mutex contactGenMutex_{};
+
+			const uint32_t numberThreads_{ std::thread::hardware_concurrency() - 1 };
 
 		private:
 			//=========================================================================
@@ -75,6 +81,9 @@ namespace Ocacho::Physics::MassAggregate
 			 * @param p_deltaTime Elapsed time between frames.
 			 */
 			void integrateParticles(const float p_deltaTime) noexcept;
+
+
+			void integrateParticlesMultithreaded(const float p_deltaTime, const size_t p_start, const size_t p_end) noexcept;
 
 			/**
 			 * @brief Calls the addContact method for all the contact generators of the particle manager.

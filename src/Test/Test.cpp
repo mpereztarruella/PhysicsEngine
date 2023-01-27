@@ -14,6 +14,8 @@
 #include <irrlicht.h>
 
 #include <Windows.h>
+#include <cmath>
+#include <stdlib.h>
 
 //=============================================================================
 //TYPEDEF
@@ -120,7 +122,7 @@ void updateNodes()
 //=============================================================================
 //=============================================================================
 
-int main()
+int main1()
 {
 	init();
 
@@ -149,7 +151,7 @@ int main()
 
 			updateNodes();
 
-			std::cout << "posicion: " << bodiesTest1[0].position << "\n";
+			//std::cout << "posicion: " << bodiesTest1[0].position << "\n";
 
 			driver->beginScene(true, true, SColor(255, 100, 101, 140));
 
@@ -167,19 +169,86 @@ int main()
 }
 
 //=============================================================================
+// PARTICLES TEST
 //=============================================================================
 
-int testParticle()
+//=============================================================================
+//CLASSES
+//=============================================================================
+
+template<typename TData>
+class data_wrapper
+{
+public:
+    data_wrapper() = default;
+    auto& operator[](int i) noexcept
+    {
+        std::lock_guard<std::mutex> guard(mutex_);
+        return data_[i];
+    }
+
+private:
+    TData data_ {};
+    std::mutex mutex_ {};
+};
+
+//=============================================================================
+// TYPEDEF
+//=============================================================================
+using part = Ocacho::Physics::MassAggregate::Particle;
+using cableHC = Ocacho::Physics::MassAggregate::Cable;
+using rodHC = Ocacho::Physics::MassAggregate::Rod;
+using gfGen = Ocacho::Physics::MassAggregate::GravityForceGenerator;
+using dragGen = Ocacho::Physics::MassAggregate::DragForceGenerator;
+
+//=============================================================================
+// METHODS
+//=============================================================================
+
+void initParticles(auto& particleManager, auto& myParticles, auto& particleNodes
+    , auto& smgr, auto& gravGen, const uint32_t start, const uint32_t end)
+{   
+    for (size_t i = start; i < end; ++i)
+    {
+        myParticles[i] = std::move(std::make_unique<part>());
+
+        // Get a random number
+        int random = rand() % 80 - 40;
+        myParticles[i]->velocity.x = random;
+
+        random = rand() % 80 - 40;
+        myParticles[i]->velocity.y = random;
+
+        random = rand() % 80 - 40;
+        myParticles[i]->velocity.z = random;
+
+        particleManager.addParticle(*myParticles[i].get());
+        particleManager.addForceRegistration(*myParticles[i].get(), gravGen);
+    }
+
+    for (size_t i = start; i < end; ++i)
+    {
+        particleNodes[i] = smgr.addSphereSceneNode(1.0f);
+    }
+}
+
+//=============================================================================
+//=============================================================================
+
+void updateParticlePosition(auto& particleNodes, auto& myParticles, const size_t start, const size_t end)
+{
+    for (size_t i = start; i < end; ++i)
+    {
+        particleNodes[i]->setPosition(irr::core::vector3df(myParticles[i]->position.x, myParticles[i]->position.y, myParticles[i]->position.z));
+    }
+}
+
+int main()
 {
   	//Cosas de Irrlicht
   	irr::IrrlichtDevice* device;
   	irr::video::IVideoDriver* driver;
   	irr::scene::ISceneManager* smgr;
- 
-  	irr::core::line3d<irr::f32> lines[8];
-  	std::vector<irr::scene::ISceneNode*> nodes;
- 
-  	nodes.reserve(5);
  
   	device = createDevice( video::EDT_OPENGL, dimension2d<u32>(1270, 720), 16, false, false, false, &receiver);
  
@@ -189,78 +258,11 @@ int testParticle()
   	if (!device)
   		return 0;
  
-  	smgr->addCameraSceneNode(0, vector3df(0,0,50), vector3df(0,0,0));
+  	smgr->addCameraSceneNode(0, vector3df(0,-20,150), vector3df(0,0,0));
   	float x, y, z;
-  		
-  	for(unsigned i=0; i<5; ++i)
-  	{
-  		nodes.emplace_back(smgr->addSphereSceneNode(1.0f));
-  	}
-  		
-  	//Cosas de fisicas
-  	using part = Ocacho::Physics::MassAggregate::Particle;
-  	using cableHC = Ocacho::Physics::MassAggregate::Cable;
-  	using rodHC = Ocacho::Physics::MassAggregate::Rod;
-  	using gfGen = Ocacho::Physics::MassAggregate::GravityForceGenerator;
-  	using dragGen = Ocacho::Physics::MassAggregate::DragForceGenerator;
-  		
-  	auto p1 = std::make_unique<part>();
-  	auto p2 = std::make_unique<part>();
-  	auto p3 = std::make_unique<part>();
-  	auto p4 = std::make_unique<part>();
-  	auto p5 = std::make_unique<part>();
-  	p1->mass = 10000000000.0f;
-  	p1->inverseMass = 1 / p1->mass;
-  	p1->position.x = 10.0f;
-  	p1->position.z = 5.0f;
- 
-  	p2->position.x = 20.0f;
-  	p3->position.x = 10.0f;
-  	p4->position.x = 0.0f;
-  	p5->position.x = -10.0f;
  
   	auto gravGen = std::make_unique<gfGen>();
   	auto drGen = std::make_unique<dragGen>();
- 
-  	cableHC cable = cableHC(10.0f);
-  	cable.particles_[0] = p1.get();
-  	cable.particles_[1] = p2.get();
- 
-  	cableHC cable2 = cableHC(11.0f);
-  	cable2.particles_[0] = p1.get();
-  	cable2.particles_[1] = p3.get();
- 
-  	cableHC cable3 = cableHC(11.0f);
-  	cable3.particles_[0] = p1.get();
-  	cable3.particles_[1] = p4.get();
- 
-  	cableHC cable4 = cableHC(11.0f);
-  	cable4.particles_[0] = p1.get();
-  	cable4.particles_[1] = p5.get();
- 
-  	rodHC rod = rodHC(6.0f);
-  	rod.particles_[0] = p2.get();
-  	rod.particles_[1] = p3.get();
- 
-  	rodHC rod2 = rodHC(6.0f);
-  	rod2.particles_[0] = p3.get();
-  	rod2.particles_[1] = p4.get();
- 
-  	rodHC rod3 = rodHC(6.0f);
-  	rod3.particles_[0] = p4.get();
-  	rod3.particles_[1] = p5.get();
- 
-  	rodHC rod4 = rodHC(6.0f);
-  	rod4.particles_[0] = p5.get();
-  	rod4.particles_[1] = p2.get();
- 
-  	rodHC rod5 = rodHC(8.49f);
-  	rod5.particles_[0] = p2.get();
-  	rod5.particles_[1] = p4.get();
- 
-  	rodHC rod6 = rodHC(8.49f);
-  	rod6.particles_[0] = p3.get();
-  	rod6.particles_[1] = p5.get();
  
   	using contactGenList = Ocacho::Physics::MassAggregate::Typelist< cableHC, rodHC >;
   	using forceList = Ocacho::Physics::MassAggregate::Typelist< gfGen, dragGen>;
@@ -268,38 +270,60 @@ int testParticle()
   	using partMan = Ocacho::Physics::MassAggregate::ParticleManager<forceList, contactGenList>;
  
   	partMan particleManager = partMan(15, 15);
- 
-  	//Adding the particles to the manager
-  	particleManager.addParticle(*p1.get());
-  	particleManager.addParticle(*p2.get());
-  	particleManager.addParticle(*p3.get());
-  	particleManager.addParticle(*p4.get());
-  	particleManager.addParticle(*p5.get());
- 
-  	//Adding the contact generators
-  	particleManager.addContactGenerator(cable);
-  	particleManager.addContactGenerator(cable2);
-  	particleManager.addContactGenerator(cable3);
-  	particleManager.addContactGenerator(cable4);
- 
-  	particleManager.addContactGenerator(rod);
-  	particleManager.addContactGenerator(rod2);
-  	particleManager.addContactGenerator(rod3);
-  	particleManager.addContactGenerator(rod4);
-  	particleManager.addContactGenerator(rod5);
-  	particleManager.addContactGenerator(rod6);
- 
-  	particleManager.addForceRegistration(*p2.get(), *gravGen);
-  	particleManager.addForceRegistration(*p3.get(), *gravGen);
-  	particleManager.addForceRegistration(*p4.get(), *gravGen);
-  	particleManager.addForceRegistration(*p5.get(), *gravGen);
+
+    const uint32_t particlesNumber{ 10000 };
+    using particleArray_t = data_wrapper<std::array<std::unique_ptr<part>, particlesNumber>>;
+    using particleNodes_t = data_wrapper<std::array<irr::scene::ISceneNode*, particlesNumber>>;
+
+    particleArray_t myParticles;
+    particleNodes_t particleNodes;
+
+    srand(unsigned(time(NULL)));
+
+    initParticles(particleManager, myParticles, particleNodes, *smgr, *gravGen.get(), 0, particlesNumber);
+
+    /*const uint32_t numberThreads = std::thread::hardware_concurrency() - 1;
+    std::vector<std::thread> myThreads;
+    myThreads.reserve(numberThreads);
+
+    const uint32_t length{ uint32_t(std::trunc( particlesNumber / numberThreads )) };
+    uint32_t start{ 0 }, end{ length };
+
+    auto lambda = [](auto&& func, auto&&... args)
+        {
+            func(std::forward<decltype(args)>(args)...);
+        };
+
+    for (uint32_t i = 0; i < numberThreads; ++i)
+    {
+        if (i == numberThreads - 1)
+            end = particlesNumber;
+
+        myThreads.emplace_back(std::thread(initParticles));
+
+        start = end;
+        end = length * (i + 2);
+    }
+
+    for (uint32_t i = 0; i < numberThreads; ++i)
+    {
+        myThreads[i].join();
+    }*/
+
+    const uint32_t numberThreads = std::thread::hardware_concurrency() - 1;
+    std::vector<std::thread> myThreads;
+    myThreads.reserve(numberThreads);
+
+    const size_t length{ uint32_t(std::trunc(particlesNumber / numberThreads)) };
 
     Ocacho::Timer timer;
     float deltaTime;
+
+    Ocacho::Timer renderTime;
  
   	while(device->run())
   	{
-  		if(timer.ellapsedSeconds() >= 0.016f)
+  		if(timer.ellapsedSeconds() >= 0.007f)
   		{
   			particleManager.reset();
  
@@ -307,49 +331,37 @@ int testParticle()
   			timer.start();
  
   			particleManager.runPhysics(deltaTime);
- 
-  			{
-  				//Actualizacion de las posiciones de los nodos y lineas de la escena
-  				nodes[0]->setPosition(irr::core::vector3df(p1->position.x, p1->position.y, p1->position.z));
-  				nodes[1]->setPosition(irr::core::vector3df(p2->position.x, p2->position.y, p2->position.z));
-  				nodes[2]->setPosition(irr::core::vector3df(p3->position.x, p3->position.y, p3->position.z));
-  				nodes[3]->setPosition(irr::core::vector3df(p4->position.x, p4->position.y, p4->position.z));
-  				nodes[4]->setPosition(irr::core::vector3df(p5->position.x, p5->position.y, p5->position.z));
-  					
-  				lines[0].start = irr::core::vector3df(p1->position.x, p1->position.y, p1->position.z);
-  				lines[0].end = irr::core::vector3df(p2->position.x, p2->position.y, p2->position.z);
- 
-  				lines[1].start = irr::core::vector3df(p1->position.x, p1->position.y, p1->position.z);
-  				lines[1].end = irr::core::vector3df(p3->position.x, p3->position.y, p3->position.z);
- 
-  				lines[2].start = irr::core::vector3df(p1->position.x, p1->position.y, p1->position.z);
-  				lines[2].end = irr::core::vector3df(p4->position.x, p4->position.y, p4->position.z);
- 
-  				lines[3].start = irr::core::vector3df(p1->position.x, p1->position.y, p1->position.z);
-  				lines[3].end = irr::core::vector3df(p5->position.x, p5->position.y, p5->position.z);
- 
-  				lines[4].start = irr::core::vector3df(p2->position.x, p2->position.y, p2->position.z);
-  				lines[4].end = irr::core::vector3df(p3->position.x, p3->position.y, p3->position.z);
- 
-  				lines[5].start = irr::core::vector3df(p3->position.x, p3->position.y, p3->position.z);
-  				lines[5].end = irr::core::vector3df(p4->position.x, p4->position.y, p4->position.z);
- 
-  				lines[6].start = irr::core::vector3df(p4->position.x, p4->position.y, p4->position.z);
-  				lines[6].end = irr::core::vector3df(p5->position.x, p5->position.y, p5->position.z);
- 
-  				lines[7].start = irr::core::vector3df(p5->position.x, p5->position.y, p5->position.z);
-  				lines[7].end = irr::core::vector3df(p2->position.x, p2->position.y, p2->position.z);
-  			}
- 
+
+            //std::cout << myParticles[3000]->position << "\n";
+
+            myThreads.clear();
+            size_t start{ 0 }, end{ length };
+
+            for (uint32_t i = 0; i < numberThreads; ++i)
+            {
+                if (i == numberThreads - 1)
+                    end = particlesNumber;
+
+                myThreads.emplace_back(std::thread(updateParticlePosition<particleNodes_t, particleArray_t>, std::reference_wrapper<particleNodes_t>(particleNodes)
+                    , std::reference_wrapper<particleArray_t>(myParticles), start, end));
+
+                start = end;
+                end = length * (i + 2);
+            }
+
+            for (uint32_t i = 0; i < numberThreads; ++i)
+            {
+                myThreads[i].join();
+            }
+            
+            renderTime.start();
   			driver->beginScene(true, true, SColor(255,100,101,140));
- 
-  			driver->setTransform(video::ETS_WORLD, core::IdentityMatrix);
-  			for(unsigned i=0; i<8; ++i)
-  				driver->draw3DLine(lines[i].start, lines[i].end, video::SColor(45, 45, 45, 256));
  
   			smgr->drawAll();
  
   			driver->endScene();
+
+            printf("Render Time: %fms \n", float(renderTime.ellapsedTime() / 1000000));
  
   			x=y=z=0;
  
@@ -377,10 +389,6 @@ int testParticle()
   			{
   				y = -1;
   			}
- 
-  			p1->position.x += x;
-  			p1->position.y += y;
-  			p1->position.z += z;
  
   			if(receiver.IsKeyDown(irr::KEY_KEY_Q))
   				break;

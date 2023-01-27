@@ -76,6 +76,7 @@ namespace Ocacho::Physics::MassAggregate
 	{
 		protected:
 			std::vector<ForceRegistration<genTypes...>> registrations_;
+			const uint32_t numberThreads{ std::thread::hardware_concurrency()};
 
 		public:
 			/**
@@ -105,6 +106,8 @@ namespace Ocacho::Physics::MassAggregate
 			 * @param deltaTime Ellapsed time calculated in base of time not frames.
 			 */
 			void updateForces(const float deltaTime) noexcept;
+
+			void updateForcesMultithreaded(const float deltaTime, const size_t p_start, const size_t p_end) noexcept;
 	};
 }//namespace Ocacho::Physics::MassAggregate
 

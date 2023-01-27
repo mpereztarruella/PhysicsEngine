@@ -108,7 +108,7 @@
       <AdditionalDependencies>Irrlicht.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy "$(SolutionDir)dependencies\irrlicht-1.8.5\bin\Win64-VisualStudio\Irrlicht.dll" "$(OutDir)"</Command>
+      <Command>xcopy  /Y "$(SolutionDir)dependencies\irrlicht-1.8.5\bin\Win64-VisualStudio\Irrlicht.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -121,7 +121,7 @@
       <AdditionalDependencies>Irrlicht.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy "$(SolutionDir)dependencies\irrlicht-1.8.5\bin\Win64-VisualStudio\Irrlicht.dll" "$(OutDir)"</Command>
+      <Command>xcopy  /Y "$(SolutionDir)dependencies\irrlicht-1.8.5\bin\Win64-VisualStudio\Irrlicht.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

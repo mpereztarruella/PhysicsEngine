@@ -10,7 +10,6 @@ namespace Ocacho::Physics::MassAggregate
 	//=========================================================================
 	//FORCE REGISTRATION
 	//=========================================================================
-	// TODO [Otto]: Por que el auto p_forceGenerator no me crea una copia?
 	template<typename... genTypes>
 	ForceRegistration<genTypes...>::ForceRegistration(Particle& p_particle, auto p_forceGenerator) noexcept
 		:particle_{p_particle}, forceGen_{p_forceGenerator}
@@ -83,15 +82,48 @@ namespace Ocacho::Physics::MassAggregate
 	void
 	ForceRegistry<genTypes...>::updateForces(const float p_deltaTime) noexcept
 	{
-		for(const auto& r : registrations_)
+		const uint32_t numberThreads_{ std::thread::hardware_concurrency() - 1 };
+
+		std::vector<std::thread> myThreads;
+		myThreads.reserve(numberThreads_);
+
+		const size_t length{ uint32_t(std::trunc(registrations_.size() / numberThreads_)) };
+		size_t start{ 0 }, end{ length };
+
+		for (uint32_t i = 0; i < numberThreads_; ++i)
 		{
+			if (i == numberThreads_ - 1)
+				end = registrations_.size();
+
+			myThreads.emplace_back(std::thread(&ForceRegistry<genTypes...>::updateForcesMultithreaded, std::reference_wrapper(*this), p_deltaTime, start, end));
+
+			start = end;
+			end = length * (i + 2);
+		}
+
+		for (uint32_t i = 0; i < numberThreads_; ++i)
+		{
+			myThreads[i].join();
+		}
+	}
+
+	//-------------------------------------------------------------------------
+	//-------------------------------------------------------------------------
+
+	template<typename... genTypes>
+	void
+	ForceRegistry<genTypes...>::updateForcesMultithreaded(const float p_deltaTime, const size_t p_start, const size_t p_end) noexcept
+	{
+		for (size_t i = p_start; i < p_end; ++i)
+		{
+			const auto& r = registrations_[i];
 			Particle& p = r.particle_;
 			auto& force = r.forceGen_;
 
 			std::visit([&](auto& force)
-			{
-				force->updateForce(p, p_deltaTime);
-			}, force);
+				{
+					force->updateForce(p, p_deltaTime);
+				}, force);
 		}
 	}
 }//namespace Ocacho::Physics::MassAggregate
