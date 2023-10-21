@@ -39,9 +39,6 @@ namespace Ocacho::Physics::MassAggregate
 	void
 	ParticleManager<ForceList, ContactGenList>::integrateParticles(const float p_deltaTime) noexcept
 	{
-		std::vector<std::thread> myThreads;
-		myThreads.reserve(numberThreads_);
-
 		const size_t length{ uint32_t(std::trunc(particles_.size() / numberThreads_))};
 		size_t start{ 0 }, end{ length };
 
@@ -50,15 +47,10 @@ namespace Ocacho::Physics::MassAggregate
 			if (i == numberThreads_ - 1)
 				end = particles_.size();
 
-			myThreads.emplace_back(std::thread(&ParticleManager<ForceList, ContactGenList>::integrateParticlesMultithreaded, std::reference_wrapper(*this), p_deltaTime, start, end));
+			threadPool_.doJob(std::bind(&ParticleManager<ForceList, ContactGenList>::integrateParticlesMultithreaded, this, p_deltaTime, start, end));
 
 			start = end;
 			end = length * (i + 2);
-		}
-
-		for (uint32_t i = 0; i < numberThreads_; ++i)
-		{
-			myThreads[i].join();
 		}
 	}
 
@@ -124,7 +116,7 @@ namespace Ocacho::Physics::MassAggregate
 
 		if (times >= 20)
 		{
-			printf("Ellapsed time: %fms \n", float(timer.ellapsedTime())/1000000);
+			printf("runPhysics time: %fms \n", float(timer.ellapsedTime())/1000000);
 			times = 0;
 		}
 

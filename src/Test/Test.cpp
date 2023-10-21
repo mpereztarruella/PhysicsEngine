@@ -13,9 +13,16 @@
 #include <ISceneNode.h>
 #include <irrlicht.h>
 
+#ifdef _WIN32
 #include <Windows.h>
+#else
+#include <unistd.h>
+#endif
 #include <cmath>
 #include <stdlib.h>
+#include<chrono>
+
+#pragma optimize("", off)
 
 //=============================================================================
 //TYPEDEF
@@ -173,9 +180,8 @@ int main1()
 //=============================================================================
 
 //=============================================================================
-//CLASSES
+//TEMPLATES
 //=============================================================================
-
 template<typename TData>
 class data_wrapper
 {
@@ -188,9 +194,52 @@ public:
     }
 
 private:
-    TData data_ {};
-    std::mutex mutex_ {};
+    TData data_{};
+    std::mutex mutex_{};
 };
+
+//=============================================================================
+//=============================================================================
+
+template<typename TContainer>
+class data_container_wrapper
+{
+public:
+    data_container_wrapper() = default;
+    auto& operator[](int i) noexcept
+    {
+        std::lock_guard<std::mutex> guard(mutex_);
+        return data_[i];
+    }
+
+private:
+    TContainer data_{};
+    std::mutex mutex_{};
+};
+template<typename TData>
+class data_container_wrapper<std::vector<TData>>
+{
+public:
+    data_container_wrapper() = default;
+    data_container_wrapper(uint32_t p_size) { data_.reserve( p_size ); }
+
+    auto& operator[](int i) noexcept
+    {
+        std::lock_guard<std::mutex> guard(mutex_);
+        return data_[i];
+    }
+
+    auto& getData() { return data_; }
+
+private:
+    std::vector<TData> data_{};
+    std::mutex mutex_{};
+};
+//=============================================================================
+//CLASSES
+//=============================================================================
+
+
 
 //=============================================================================
 // TYPEDEF
@@ -271,12 +320,12 @@ int main()
  
   	partMan particleManager = partMan(15, 15);
 
-    const uint32_t particlesNumber{ 10000 };
-    using particleArray_t = data_wrapper<std::array<std::unique_ptr<part>, particlesNumber>>;
-    using particleNodes_t = data_wrapper<std::array<irr::scene::ISceneNode*, particlesNumber>>;
+    const uint32_t particlesNumber{ 50000 };
+    using particleVector_t = data_container_wrapper<std::array<std::unique_ptr<part>, particlesNumber>>;
+    using particleNodes_t = data_container_wrapper<std::array<irr::scene::ISceneNode*, particlesNumber>>;
 
-    particleArray_t myParticles;
-    particleNodes_t particleNodes;
+    particleVector_t myParticles {};
+    particleNodes_t particleNodes {};
 
     srand(unsigned(time(NULL)));
 
@@ -310,7 +359,11 @@ int main()
         myThreads[i].join();
     }*/
 
-    const uint32_t numberThreads = std::thread::hardware_concurrency() - 1;
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+    const int numberThreads = std::thread::hardware_concurrency() - 1;
+    Ocacho::Physics::MassAggregate::ThreadPool myThreadPool{ numberThreads };
+    //const uint32_t numberThreads = 1;
     std::vector<std::thread> myThreads;
     myThreads.reserve(numberThreads);
 
@@ -320,7 +373,20 @@ int main()
     float deltaTime;
 
     Ocacho::Timer renderTime;
- 
+    Ocacho::Timer threadTime;
+
+    /*for (uint32_t i = 0; i < numberThreads; ++i)
+    {
+        if (i == numberThreads - 1)
+            end = particlesNumber;
+
+        myThreads.emplace_back(std::thread(updateParticlePosition<particleNodes_t, particleVector_t>, std::reference_wrapper<particleNodes_t>(particleNodes)
+            , std::reference_wrapper<particleVector_t>(myParticles), start, end));
+
+        start = end;
+        end = length * (i + 2);
+    }*/
+    
   	while(device->run())
   	{
   		if(timer.ellapsedSeconds() >= 0.007f)
@@ -332,28 +398,24 @@ int main()
  
   			particleManager.runPhysics(deltaTime);
 
-            //std::cout << myParticles[3000]->position << "\n";
+            //myThreads.clear();
 
-            myThreads.clear();
             size_t start{ 0 }, end{ length };
+
+            threadTime.start();
 
             for (uint32_t i = 0; i < numberThreads; ++i)
             {
                 if (i == numberThreads - 1)
                     end = particlesNumber;
 
-                myThreads.emplace_back(std::thread(updateParticlePosition<particleNodes_t, particleArray_t>, std::reference_wrapper<particleNodes_t>(particleNodes)
-                    , std::reference_wrapper<particleArray_t>(myParticles), start, end));
+                myThreadPool.doJob(std::bind(updateParticlePosition<particleNodes_t, particleVector_t>, std::reference_wrapper<particleNodes_t>(particleNodes)
+                    , std::reference_wrapper<particleVector_t>(myParticles), start, end));
 
                 start = end;
                 end = length * (i + 2);
             }
 
-            for (uint32_t i = 0; i < numberThreads; ++i)
-            {
-                myThreads[i].join();
-            }
-            
             renderTime.start();
   			driver->beginScene(true, true, SColor(255,100,101,140));
  
@@ -361,8 +423,8 @@ int main()
  
   			driver->endScene();
 
-            printf("Render Time: %fms \n", float(renderTime.ellapsedTime() / 1000000));
- 
+            printf("Render time: %fms \n", float(timer.ellapsedTime()) / 1000000);
+
   			x=y=z=0;
  
   			if(receiver.IsKeyDown(irr::KEY_KEY_W))
@@ -392,6 +454,11 @@ int main()
  
   			if(receiver.IsKeyDown(irr::KEY_KEY_Q))
   				break;
+
+            /*for (uint32_t i = 0; i < numberThreads; ++i)
+            {
+                myThreads[i].join();
+            }*/
   		}
   	}
  
