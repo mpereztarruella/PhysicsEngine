@@ -1,6 +1,6 @@
 /**
  * @file CollideFine.hpp
- * @author OcachoGames-Miguel (ocachogames@gmail.com)
+ * @author Miguel Perez Tarruella (mpereztarruella@gmail.com)
  * @brief Contains the detailed collision detection system to generate the contacts.
  * 
  * @version 0.1

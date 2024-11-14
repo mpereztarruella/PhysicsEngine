@@ -1,6 +1,6 @@
 /**
  * @file BoundingVolumes.hpp
- * @author OcachoGames-Miguel (ocachogames@gmail.com)
+ * @author Miguel Perez Tarruella (mpereztarruella@gmail.com)
  * @brief Contains the structures for the different bounding volumes.
  * 
  * @version 0.1

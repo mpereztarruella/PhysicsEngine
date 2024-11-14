@@ -1,6 +1,6 @@
 /**
  * @file ParticleManager.hpp
- * @author OcachoGames-Miguel (ocachogames@gmail.com)
+ * @author Miguel Perez Tarruella (mpereztarruella@gmail.com)
  * @brief This class contains all the data that the manager will need to update the particles with the physics engine.
  * 
  * 

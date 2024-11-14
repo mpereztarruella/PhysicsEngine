@@ -1,6 +1,6 @@
 /**
  * @file ContactResolver.hpp
- * @author OcachoGames-Miguel (ocachogames@gmail.com)
+ * @author Miguel Perez Tarruella (mpereztarruella@gmail.com)
  * @brief This file would contain the contact resolver algorithm for the contacts of the physics engine.
  * 
  * 

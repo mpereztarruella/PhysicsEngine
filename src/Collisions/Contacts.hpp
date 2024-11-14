@@ -1,6 +1,6 @@
 /**
  * @file Contacts.hpp
- * @author OcachoGames-Miguel (ocachogames@gmail.com)
+ * @author Miguel Perez Tarruella (mpereztarruella@gmail.com)
  * @brief Contains the structure of data and the different methods to create the contacts
  * for the collision system.
  * 

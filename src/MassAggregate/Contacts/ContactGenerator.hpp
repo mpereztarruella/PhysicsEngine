@@ -1,6 +1,6 @@
 /**
  * @file ContactGenerator.hpp
- * @author OcachoGames-Miguel (ocachogames@gmail.com)
+ * @author Miguel Perez Tarruella (mpereztarruella@gmail.com)
  * @brief This file contains the base class to be derived to create new contact generators.
  * 
  * 

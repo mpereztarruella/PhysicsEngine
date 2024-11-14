@@ -1,6 +1,6 @@
 /**
  * @file Link.hpp
- * @author OcachoGames-Miguel (ocachogames@gmail.com)
+ * @author Miguel Perez Tarruella (mpereztarruella@gmail.com)
  * @brief This file would contain the link class to be derived by others to create hard constraints.
  * 
  * 

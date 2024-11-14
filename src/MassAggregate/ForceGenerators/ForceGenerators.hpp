@@ -1,6 +1,6 @@
 /**
  * @file ForceGenerators.hpp
- * @author OcachoGames-Miguel (ocachogames@gmail.com)
+ * @author Miguel Perez Tarruella (mpereztarruella@gmail.com)
  * @brief This file would contain the different force generators headers for the physics engine.
  * 
  * 

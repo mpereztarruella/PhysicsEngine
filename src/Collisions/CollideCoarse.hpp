@@ -1,6 +1,6 @@
 /**
  * @file CollideCoarse.hpp
- * @author OcachoGames-Miguel (ocachogames@gmail.com)
+ * @author Miguel Perez Tarruella (mpereztarruella@gmail.com)
  * @brief Contains the first collision detection system to filter possible collisions.
  * 
  * @version 0.1

@@ -1,6 +1,6 @@
 /**
  * @file Contact.hpp
- * @author OcachoGames-Miguel (ocachogames@gmail.com)
+ * @author Miguel Perez Tarruella (mpereztarruella@gmail.com)
  * @brief This file would contain the contact class that contains the information to resolve collisions detected by the collision detector.
  * 
  * 

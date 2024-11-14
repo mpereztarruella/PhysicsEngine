@@ -1,7 +1,7 @@
 /**
  * @file Particle.hpp
- * @author OcachoGames-Miguel (ocachogames@gmail.com)
- * @brief This file would contain the class with the data needed for physics engine.
+ * @author Miguel Perez Tarruella (mpereztarruella@gmail.com)
+ * @brief This file would contain the class with the data needed for the mass aggregate physics engine.
  * 
  * 
  * @version 0.1
