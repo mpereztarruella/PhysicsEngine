@@ -289,6 +289,11 @@ void updateParticlePosition(auto& particleNodes, auto& myParticles, const size_t
     for (size_t i = start; i < end; ++i)
     {
         particleNodes[i]->setPosition(irr::core::vector3df(myParticles[i]->position.x, myParticles[i]->position.y, myParticles[i]->position.z));
+        
+        if (myParticles[i]->position.y < -70)
+        {
+            myParticles[i]->velocity.y = -myParticles[i]->velocity.y;
+        }
     }
 }
 
@@ -307,7 +312,7 @@ int main()
   	if (!device)
   		return 0;
  
-  	smgr->addCameraSceneNode(0, vector3df(0,-20,150), vector3df(0,0,0));
+  	smgr->addCameraSceneNode(0, vector3df(0,40,250), vector3df(0,0,0));
   	float x, y, z;
  
   	auto gravGen = std::make_unique<gfGen>();
@@ -320,7 +325,7 @@ int main()
  
   	partMan particleManager = partMan(15, 15);
 
-    const uint32_t particlesNumber{ 50000 };
+    const uint32_t particlesNumber{ 10000 };
     using particleVector_t = data_container_wrapper<std::array<std::unique_ptr<part>, particlesNumber>>;
     using particleNodes_t = data_container_wrapper<std::array<irr::scene::ISceneNode*, particlesNumber>>;
 
@@ -423,7 +428,7 @@ int main()
  
   			driver->endScene();
 
-            printf("Render time: %fms \n", float(timer.ellapsedTime()) / 1000000);
+            //printf("Render time: %fms \n", float(timer.ellapsedTime()) / 1000000);
 
   			x=y=z=0;
  
