@@ -475,6 +475,7 @@
     <None Include="src\Collisions\CollideCoarse.tpp" />
     <None Include="src\Collisions\Contacts.tpp" />
     <None Include="dependencies\irrlicht-1.8.5\bin\Win64-VisualStudio\Irrlicht.dll" />
+    <None Include="src\RigidBody\RigidBodyManager.tpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dependencies\irrlicht-1.8.5\include\aabbox3d.h">
@@ -1945,6 +1946,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Collisions\Contacts.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Utility\MetaClasses.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\RigidBody\RigidBodyManager.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

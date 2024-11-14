@@ -16,6 +16,7 @@
 #include <queue>
 
 #include "Utility/TypeAliases.hpp"
+#include "Utility/MetaClasses.hpp"
 #include "Physics.hpp"
 #include "MassAggregate/ForceGenerators/ForceGeneratorBase.hpp"
 #include "MassAggregate/Contacts/ContactResolver.hpp"
@@ -23,27 +24,6 @@
 
 namespace Ocacho::Physics::MassAggregate
 {
-	/**
-	 * @brief Use this struct to create the two lists of parameters we'll need for the ParticleManager.
-	 * The first list for the force registry that will contain all the force generator types.
-	 * The second list for the contact generator vector that will contain all the contact generator types.
-	 * 
-	 * @tparam Ts The list of types that will contain the Typelist.
-	 */
-	template<typename... Ts>
-	struct Typelist {};
-
-	namespace
-	{
-		template <template <typename...> class New, typename List>
-		struct replace {};
-		template <template <typename...> class New, typename... Ts>
-		struct replace<New, Typelist<Ts...>>
-		{
-			using type = New<Ts...>;
-		};
-	}
-
 	class ThreadPool
 	{
 		public:
@@ -124,8 +104,8 @@ namespace Ocacho::Physics::MassAggregate
 	class ParticleManager
 	{
 		private:
-			using forceRegType = typename replace<ForceRegistry, ForceList>::type;
-			using contactGenVariantType = typename replace<std::variant, ContactGenList>::type;
+			using forceRegType = typename Ocacho::Meta::replace<ForceRegistry, ForceList>::type;
+			using contactGenVariantType = typename Ocacho::Meta::replace<std::variant, ContactGenList>::type;
 
 			//Holds the reference to the particles
 			std::vector<Particle*> particles_;

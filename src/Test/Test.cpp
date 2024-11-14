@@ -3,6 +3,8 @@
 #include <Utility/Timer.hpp>
 #include <Physics.hpp>
 #include <RigidBody/ForceGenerators/ForceGeneratorsRB.hpp>
+//#include <RigidBody/ForceGenerators/ForceGeneratorBaseRB.hpp>
+#include <RigidBody/RigidBodyManager.hpp>
 #include <MassAggregate/Constraints/HardConstraints.hpp>
 #include <MassAggregate/ForceGenerators/ForceGenerators.hpp>
 #include <MassAggregate/ParticleManager.hpp>
@@ -24,11 +26,6 @@
 
 #pragma optimize("", off)
 
-//=============================================================================
-//TYPEDEF
-//=============================================================================
-using RigidBody = Ocacho::Physics::RigidBody::RigidBody;
-
 //Irrlitch
 using namespace irr;
 using namespace core;
@@ -41,8 +38,6 @@ using namespace video;
 Ocacho::Timer timer;
 float deltaTime{};
 
-std::array<RigidBody, 1> bodiesTest1{};
-
 bool isBoosting{ false };
 float currentVelocity{ 15.f };
 
@@ -51,128 +46,46 @@ irr::IrrlichtDevice* device;
 irr::video::IVideoDriver* driver;
 irr::scene::ISceneManager* smgr;
 DirtyEvent receiver;
-std::array<ISceneNode*, 1> nodesTest1 {};
 
 //=============================================================================
 //METHODS
 //=============================================================================
 
-void init()
+void checkInput(auto& entity)
 {
-	bodiesTest1[0].acceleration.y = -20.f;
-
-
-  	device = createDevice( video::EDT_OPENGL, dimension2d<u32>(1270, 720), 16, false, false, false, &receiver);
- 
-  	driver = device->getVideoDriver();
-  	smgr = device->getSceneManager();
- 
-  	if (!device)
-  		return;
- 
-  	smgr->addCameraSceneNode(0, vector3df(0,10,-30), vector3df(0,0,0));
-
-	nodesTest1[0] = smgr->addSphereSceneNode(1.0f);
-}
-
-//=============================================================================
-//=============================================================================
-
-void checkInput()
-{
-	bodiesTest1[0].velocity.z = 0;
-	bodiesTest1[0].velocity.x = 0;
+	entity.velocity.z = 0;
+	entity.velocity.x = 0;
 
 	auto state = receiver.IsKeyDown(irr::KEY_KEY_W);
 	if (state)
 	{
-		bodiesTest1[0].velocity.z = currentVelocity;
+		entity.velocity.z = currentVelocity;
 	}
 
 	state = receiver.IsKeyDown(irr::KEY_KEY_S);
 	if (state)
 	{
-		bodiesTest1[0].velocity.z = -currentVelocity;
+		entity.velocity.z = -currentVelocity;
 	}
 
 	state = receiver.IsKeyDown(irr::KEY_KEY_A);
 	if (state)
 	{
-		bodiesTest1[0].velocity.x = -currentVelocity;
+		entity.velocity.x = -currentVelocity;
 	}
 
 	state = receiver.IsKeyDown(irr::KEY_KEY_D);
 	if (state)
 	{
-		bodiesTest1[0].velocity.x = currentVelocity;
+		entity.velocity.x = currentVelocity;
 	}
 
 	state = receiver.IsKeyDown(irr::KEY_SPACE);
 	if (state)
 	{
-		if (bodiesTest1[0].velocity.y < 0.1f && bodiesTest1[0].velocity.y > -0.1f)
-			bodiesTest1[0].velocity.y = 30.f;
+		if (entity.velocity.y < 0.1f && entity.velocity.y > -0.1f)
+			entity.velocity.y = 30.f;
 	}
-}
-
-//=============================================================================
-//=============================================================================
-
-void updateNodes()
-{
-	for (uint8_t i = 0; i < nodesTest1.size(); ++i)
-	{
-		nodesTest1[i]->setPosition(irr::core::vector3d(bodiesTest1[i].position.x, bodiesTest1[i].position.y, bodiesTest1[i].position.z));
-	}
-}
-
-//=============================================================================
-//=============================================================================
-
-int main1()
-{
-	init();
-
-	timer.start();
-
-	while(device->run())
-	{
-		deltaTime = timer.ellapsedSeconds();
-
-		if (deltaTime >= 0.016f)
-		{
-			timer.start();
-
-			checkInput();
-
-			for (uint8_t i = 0; i < bodiesTest1.size(); ++i)
-			{
-				Ocacho::Physics::RigidBody::IntegrateRigidBody(bodiesTest1[i], deltaTime);
-			}
-
-			if (bodiesTest1[0].position.y < 0.f)
-			{
-				bodiesTest1[0].position.y = 0.f;
-				bodiesTest1[0].velocity.y = 0.f;
-			}
-
-			updateNodes();
-
-			//std::cout << "posicion: " << bodiesTest1[0].position << "\n";
-
-			driver->beginScene(true, true, SColor(255, 100, 101, 140));
-
-			smgr->drawAll();
-			driver->endScene();
-
-			if (receiver.IsKeyDown(irr::KEY_ESCAPE))
-				break;
-		}
-	}
-
-    device->drop();
-
-	return 0;
 }
 
 //=============================================================================
@@ -242,7 +155,7 @@ private:
 
 
 //=============================================================================
-// TYPEDEF
+// TYPEDEF PARTICLES
 //=============================================================================
 using part = Ocacho::Physics::MassAggregate::Particle;
 using cableHC = Ocacho::Physics::MassAggregate::Cable;
@@ -284,20 +197,35 @@ void initParticles(auto& particleManager, auto& myParticles, auto& particleNodes
 //=============================================================================
 //=============================================================================
 
-void updateParticlePosition(auto& particleNodes, auto& myParticles, const size_t start, const size_t end)
+void initRenderNodesWSpheres(irr::scene::ISceneManager* smgr, auto& renderNodes
+    , const size_t start, const size_t end)
 {
     for (size_t i = start; i < end; ++i)
     {
-        particleNodes[i]->setPosition(irr::core::vector3df(myParticles[i]->position.x, myParticles[i]->position.y, myParticles[i]->position.z));
+        renderNodes[i] = smgr->addSphereSceneNode(1.0f);
+    }
+}
+
+//=============================================================================
+//=============================================================================
+
+void updateNodesPosition(auto& renderNodes, auto& physEntities, const size_t start, const size_t end)
+{
+    for (size_t i = start; i < end; ++i)
+    {
+        renderNodes[i]->setPosition(irr::core::vector3df(physEntities[i]->position.x, physEntities[i]->position.y, physEntities[i]->position.z));
         
-        if (myParticles[i]->position.y < -70)
+        if (physEntities[i]->position.y < -70)
         {
-            myParticles[i]->velocity.y = -myParticles[i]->velocity.y;
+            physEntities[i]->velocity.y = -physEntities[i]->velocity.y;
         }
     }
 }
 
-int main()
+//=============================================================================
+//=============================================================================
+
+int testExplosion()
 {
   	//Cosas de Irrlicht
   	irr::IrrlichtDevice* device;
@@ -318,8 +246,8 @@ int main()
   	auto gravGen = std::make_unique<gfGen>();
   	auto drGen = std::make_unique<dragGen>();
  
-  	using contactGenList = Ocacho::Physics::MassAggregate::Typelist< cableHC, rodHC >;
-  	using forceList = Ocacho::Physics::MassAggregate::Typelist< gfGen, dragGen>;
+  	using contactGenList = Ocacho::Meta::Typelist< cableHC, rodHC >;
+  	using forceList = Ocacho::Meta::Typelist< gfGen, dragGen>;
  
   	using partMan = Ocacho::Physics::MassAggregate::ParticleManager<forceList, contactGenList>;
  
@@ -414,7 +342,7 @@ int main()
                 if (i == numberThreads - 1)
                     end = particlesNumber;
 
-                myThreadPool.doJob(std::bind(updateParticlePosition<particleNodes_t, particleVector_t>, std::reference_wrapper<particleNodes_t>(particleNodes)
+                myThreadPool.doJob(std::bind(updateNodesPosition<particleNodes_t, particleVector_t>, std::reference_wrapper<particleNodes_t>(particleNodes)
                     , std::reference_wrapper<particleVector_t>(myParticles), start, end));
 
                 start = end;
@@ -530,8 +458,8 @@ int testSprings()
   	Ocacho::Timer timer;
   	float deltaTime;
  
-  	using contactGenList = Ocacho::Physics::MassAggregate::Typelist< cableHC, rodHC >;
-  	using forceList = Ocacho::Physics::MassAggregate::Typelist< gfGen, dragGen, spring>;
+  	using contactGenList = Ocacho::Meta::Typelist< cableHC, rodHC >;
+  	using forceList = Ocacho::Meta::Typelist< gfGen, dragGen, spring>;
  
   	using partMan = Ocacho::Physics::MassAggregate::ParticleManager<forceList, contactGenList>;
  
@@ -635,6 +563,91 @@ int testSprings()
   	}
  
   	device->drop();
+
+    return 0;
+}
+
+//=============================================================================
+// TYPEDEF RIGIDBODY
+//=============================================================================
+using rigidBodyT = Ocacho::Physics::RigidBody::RigidBody;
+using gravityGenT = Ocacho::Physics::RigidBody::GravityForceGeneratorRB;
+using forceList = Ocacho::Meta::Typelist<gravityGenT>;
+using rigidBodyManager = Ocacho::Physics::RigidBody::RigidBodyManager<forceList>;
+
+//=============================================================================
+//=============================================================================
+
+//int testRigidbody()
+int main()
+{
+    //Cosas de Irrlicht
+    irr::IrrlichtDevice* device;
+    irr::video::IVideoDriver* driver;
+    irr::scene::ISceneManager* smgr;
+
+    device = createDevice(video::EDT_OPENGL, dimension2d<u32>(1270, 720), 16, false, false, false, &receiver);
+
+    driver = device->getVideoDriver();
+    smgr = device->getSceneManager();
+
+    if (!device)
+        return 0;
+
+    smgr->addCameraSceneNode(0, vector3df(0, 40, 50), vector3df(0, 0, 0));
+
+    const size_t rigidBodyNumber {1};
+    std::array<rigidBodyT, rigidBodyNumber> rigidBodies;
+    std::array<irr::scene::ISceneNode*, rigidBodyNumber> rigidBodyNodes;
+
+    initRenderNodesWSpheres(smgr, rigidBodyNodes, 0, rigidBodyNumber);
+
+    gravityGenT gravityGenerator;
+    rigidBodyManager rbManager{};
+    //rbManager.addRigidBody(rigidBodies[0]);
+    //rbManager.addForceRegistration(rigidBodies[0], gravityGenerator);
+
+    while (device->run())
+    {
+        deltaTime = timer.ellapsedSeconds();
+
+        if (deltaTime >= 0.016f)
+        {
+            timer.start();
+
+            //checkInput();
+
+            //rbManager.runPhysics(deltaTime);
+
+            /*if (rigidBodies[0].position.y < 0.f)
+            {
+                rigidBodies[0].position.y = 0.f;
+                rigidBodies[0].velocity.y = 0.f;
+            }*/
+
+            //updateNodesPosition(rigidBodyNodes, rigidBodies, 0, rigidBodyNumber);
+
+            for (size_t i = 0; i < rigidBodyNumber; ++i)
+            {
+                rigidBodyNodes[i]->setPosition(irr::core::vector3df(rigidBodies[i].position.x, rigidBodies[i].position.y, rigidBodies[i].position.z));
+
+                if (rigidBodies[i].position.y < -70)
+                {
+                    rigidBodies[i].velocity.y = -rigidBodies[i].velocity.y;
+                }
+            }
+
+            driver->beginScene(true, true, SColor(255, 100, 101, 140));
+
+            smgr->drawAll();
+            driver->endScene();
+
+            if (receiver.IsKeyDown(irr::KEY_ESCAPE))
+                break;
+        }
+    }
+
+    device->drop();
 
     return 0;
 }
