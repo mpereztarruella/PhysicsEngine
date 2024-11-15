@@ -26,11 +26,9 @@ namespace Ocacho::Physics::RigidBody
 
 			//Holds the reference to the RigidBodies
 			std::vector<RigidBody*> rigidBodies_;
-			//std::mutex particlesMutex_{};
 
 			//Holds the force registry for the engine
 			forceRegistryT forceReg_;
-			//std::mutex forceRegMutex_{};
 
 		private:
 			//=========================================================================
@@ -44,7 +42,7 @@ namespace Ocacho::Physics::RigidBody
 			void integrateRigidBodies(const float p_deltaTime) noexcept;
 
 		public:
-			RigidBodyManager() noexcept;
+			RigidBodyManager() noexcept = default;
 
 			//=========================================================================
 			//PUBLIC METHODS
@@ -85,4 +83,4 @@ namespace Ocacho::Physics::RigidBody
 	};
 }//namespace Ocacho::Physics::RigidBody
 
-#include "RigidBodyManager.hpp"
+#include "RigidBodyManager.tpp"

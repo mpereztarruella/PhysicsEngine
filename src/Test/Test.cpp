@@ -604,8 +604,8 @@ int main()
 
     gravityGenT gravityGenerator;
     rigidBodyManager rbManager{};
-    //rbManager.addRigidBody(rigidBodies[0]);
-    //rbManager.addForceRegistration(rigidBodies[0], gravityGenerator);
+    rbManager.addRigidBody(rigidBodies[0]);
+    rbManager.addForceRegistration(rigidBodies[0], gravityGenerator);
 
     while (device->run())
     {
@@ -617,7 +617,7 @@ int main()
 
             //checkInput();
 
-            //rbManager.runPhysics(deltaTime);
+            rbManager.runPhysics(deltaTime);
 
             /*if (rigidBodies[0].position.y < 0.f)
             {

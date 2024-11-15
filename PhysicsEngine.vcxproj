@@ -778,6 +778,7 @@
     <ClInclude Include="src\RigidBody\ForceGenerators\ForceGeneratorsRB.hpp" />
     <ClInclude Include="src\RigidBody\RigidBody.hpp" />
     <ClInclude Include="src\RigidBody\RigidBodyManager.hpp" />
+    <ClInclude Include="src\RigidBody\RigidBodyManagerTest.hpp" />
     <ClInclude Include="src\Test\Test.hpp" />
     <ClInclude Include="src\Utility\MetaClasses.hpp" />
     <ClInclude Include="src\Utility\Timer.hpp" />

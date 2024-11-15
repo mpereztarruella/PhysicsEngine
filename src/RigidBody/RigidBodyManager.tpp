@@ -1,36 +1,7 @@
+#include <Utility/Timer.hpp>
+
 namespace Ocacho::Physics::RigidBody
 {
-	template <typename ForceList>
-	RigidBodyManager<ForceList>::RigidBodyManager() noexcept
-	{
-	}
-
-	//-------------------------------------------------------------------------
-	//-------------------------------------------------------------------------
-
-	//template <typename ForceList, typename ContactGenList>
-	//unsigned
-	//RigidBodyManager<ForceList, ContactGenList>::generateContacts() noexcept
-	//{
-	//	unsigned used = 0;
-
-	//	for (auto& cGen : contactGenVector_)
-	//	{
-	//		std::visit([&](auto& contactGen)
-	//			{
-	//				used += contactGen.addContact(contactList_);
-	//			}, cGen);
-
-	//		if (contactList_.size() == contactList_.capacity())
-	//			break;
-	//	}
-
-	//	return used;
-	//}
-
-	//-------------------------------------------------------------------------
-	//-------------------------------------------------------------------------
-
 	template <typename ForceList>
 	void
 	RigidBodyManager<ForceList>::integrateRigidBodies(const float p_deltaTime) noexcept
@@ -43,22 +14,6 @@ namespace Ocacho::Physics::RigidBody
 				Ocacho::Physics::RigidBody::IntegrateRigidBody(*r, p_deltaTime);
 		}
 	}
-
-	//-------------------------------------------------------------------------
-	//-------------------------------------------------------------------------
-
-	//template <typename ForceList, typename ContactGenList>
-	//void
-	//RigidBodyManager<ForceList, ContactGenList>::integrateParticlesMultithreaded(const float p_deltaTime, const size_t p_start, const size_t p_end) noexcept
-	//{
-	//	for (size_t i = p_start; i < p_end; ++i)
-	//	{
-	//		auto& p = particles_[i];
-
-	//		if (p)
-	//			Ocacho::Physics::MassAggregate::IntegrateParticle(*p, p_deltaTime);
-	//	}
-	//}
 
 	//-------------------------------------------------------------------------
 	//-------------------------------------------------------------------------
@@ -111,7 +66,6 @@ namespace Ocacho::Physics::RigidBody
 	void
 	RigidBodyManager<ForceList>::addRigidBody(RigidBody& p_rigidBody) noexcept
 	{
-		//std::lock_guard<std::mutex> guard(particlesMutex_);
 		rigidBodies_.push_back(&p_rigidBody);
 	}
 
@@ -122,7 +76,6 @@ namespace Ocacho::Physics::RigidBody
 	void
 	RigidBodyManager<ForceList>::addForceRegistration(RigidBody& p_rigidBody, auto& p_forceGen) noexcept
 	{
-		//std::lock_guard<std::mutex> guard(forceRegMutex_);
 		forceReg_.add(p_rigidBody, p_forceGen);
 	}
-}//namespace Ocacho::Physics::RigidBody
+};//namespace Ocacho::Physics::RigidBody
