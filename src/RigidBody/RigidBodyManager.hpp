@@ -18,6 +18,14 @@
 
 namespace Ocacho::Physics::RigidBody
 {
+	enum ColliderTypeEnum
+	{
+		None = -1,
+		Sphere,
+		Cube,
+		Count
+	};
+
 	template <typename ForceList>
 	class RigidBodyManager
 	{

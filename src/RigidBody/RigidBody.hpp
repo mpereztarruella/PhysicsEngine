@@ -33,6 +33,8 @@ namespace Ocacho::Physics::RigidBody
 			float mass		        {1.0f};
 			//The inverse value of the mass, it is used many times in the physics engine.
 			float inverseMass	    {1/mass};
+			//Method to properly set the mass
+			void SetMass(float p_mass) { mass = p_mass; inverseMass = 1 / mass; };
 
 			//Vector that contains the position of the RigidBody.
 			Vector3 position		{0.0f, 0.0f, 0.0f};

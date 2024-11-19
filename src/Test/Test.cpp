@@ -2,9 +2,13 @@
 
 #include <Utility/Timer.hpp>
 #include <Physics.hpp>
+
 #include <RigidBody/ForceGenerators/ForceGeneratorsRB.hpp>
 //#include <RigidBody/ForceGenerators/ForceGeneratorBaseRB.hpp>
 #include <RigidBody/RigidBodyManager.hpp>
+#include <Collisions/CollideFine.hpp>
+#include <Collisions/Contacts.hpp>
+
 #include <MassAggregate/Constraints/HardConstraints.hpp>
 #include <MassAggregate/ForceGenerators/ForceGenerators.hpp>
 #include <MassAggregate/ParticleManager.hpp>
@@ -572,8 +576,14 @@ int testSprings()
 //=============================================================================
 using rigidBodyT = Ocacho::Physics::RigidBody::RigidBody;
 using gravityGenT = Ocacho::Physics::RigidBody::GravityForceGeneratorRB;
-using forceList = Ocacho::Meta::Typelist<gravityGenT>;
-using rigidBodyManager = Ocacho::Physics::RigidBody::RigidBodyManager<forceList>;
+using forceListT = Ocacho::Meta::Typelist<gravityGenT>;
+using rigidBodyManagerT = Ocacho::Physics::RigidBody::RigidBodyManager<forceListT>;
+
+using collisionDataT = Ocacho::Physics::RigidBody::CollisionData;
+using sphereColliderT = Ocacho::Physics::RigidBody::CollisionSphere;
+using boxColliderT = Ocacho::Physics::RigidBody::CollisionBox;
+using collisionDetectorT = Ocacho::Physics::RigidBody::CollisionDetector;
+using contactResolverT = Ocacho::Physics::RigidBody::ContactResolver;
 
 //=============================================================================
 //=============================================================================
@@ -594,19 +604,39 @@ int main()
     if (!device)
         return 0;
 
-    smgr->addCameraSceneNode(0, vector3df(0, 40, 50), vector3df(0, 0, 0));
+    smgr->addCameraSceneNode(0, vector3df(0, 20, 20), vector3df(0, 0, 0));
 
-    const size_t rigidBodyNumber {1};
+    const size_t rigidBodyNumber {2};
     std::array<rigidBodyT, rigidBodyNumber> rigidBodies;
     std::array<irr::scene::ISceneNode*, rigidBodyNumber> rigidBodyNodes;
 
-    initRenderNodesWSpheres(smgr, rigidBodyNodes, 0, rigidBodyNumber);
+
+    //initRenderNodesWSpheres(smgr, rigidBodyNodes, 0, rigidBodyNumber);
+    rigidBodyNodes[0] = smgr->addSphereSceneNode(1.0f);
+    rigidBodyNodes[1] = smgr->addCubeSceneNode(1.0f);
 
     gravityGenT gravityGenerator;
-    rigidBodyManager rbManager{};
+    rigidBodyManagerT rbManager{};
     rbManager.addRigidBody(rigidBodies[0]);
+    rbManager.addRigidBody(rigidBodies[1]);
+    rigidBodies[1].position.y = -20;
+    rigidBodies[1].SetMass(20000000);
     rbManager.addForceRegistration(rigidBodies[0], gravityGenerator);
 
+    collisionDetectorT colDetector;
+    collisionDataT colData;
+    contactResolverT contactResolver {50};
+    sphereColliderT sphereCol;
+    sphereCol.body_ = &rigidBodies[0];
+    sphereColliderT sphereCol1;
+    sphereCol1.body_ = &rigidBodies[1];
+    /*boxColliderT boxCol;
+    boxCol.body_ = &rigidBodies[1];
+    boxCol.halfSize_ = Ocacho::Vector3(10, 1, 10);*/
+    rigidBodyNodes[1]->setScale({10, 1, 10});
+    rigidBodyNodes[1]->setMaterialFlag(EMF_LIGHTING, false);
+    rigidBodyNodes[1]->setMaterialTexture(0, driver->getTexture("../../models/materials/red_color.png"));
+    
     while (device->run())
     {
         deltaTime = timer.ellapsedSeconds();
@@ -616,14 +646,13 @@ int main()
             timer.start();
 
             //checkInput();
-
             rbManager.runPhysics(deltaTime);
-
-            /*if (rigidBodies[0].position.y < 0.f)
-            {
-                rigidBodies[0].position.y = 0.f;
-                rigidBodies[0].velocity.y = 0.f;
-            }*/
+            sphereCol.calculateInternals();
+            sphereCol1.calculateInternals();
+            colDetector.sphereAndSphere(sphereCol, sphereCol1, &colData);
+            //boxCol.calculateInternals();
+            //colDetector.boxAndSphere(boxCol, sphereCol, &colData);
+            contactResolver.resolveContacts(colData.contactList_, colData.currentContact_, deltaTime);
 
             //updateNodesPosition(rigidBodyNodes, rigidBodies, 0, rigidBodyNumber);
 
@@ -631,10 +660,10 @@ int main()
             {
                 rigidBodyNodes[i]->setPosition(irr::core::vector3df(rigidBodies[i].position.x, rigidBodies[i].position.y, rigidBodies[i].position.z));
 
-                if (rigidBodies[i].position.y < -70)
+                /*if (rigidBodies[i].position.y < -70)
                 {
                     rigidBodies[i].velocity.y = -rigidBodies[i].velocity.y;
-                }
+                }*/
             }
 
             driver->beginScene(true, true, SColor(255, 100, 101, 140));

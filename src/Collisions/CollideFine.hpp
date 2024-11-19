@@ -17,7 +17,7 @@
 
 namespace Ocacho::Physics::RigidBody
 {
-	//TODO[Otto]:Mirar como hacer para que la variable contactsLeft defina el tamanio del array
+	//TODO: Check how to make contactsLeft to define array size
 	struct CollisionData
 	{
 		//Indicates the maximum number of contacts per update
